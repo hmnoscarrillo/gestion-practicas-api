@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 // Importar rutas de cada modulo (estructura del docente)
 const programaRoutes = require('./src/routes/programaRoutes');
@@ -20,6 +21,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Servir portal web de visualizacion
+app.use('/web', express.static(path.join(__dirname, 'public')));
 
 // Endpoint raiz informativo
 app.get('/', (req, res) => {
