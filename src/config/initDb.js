@@ -3,26 +3,33 @@ const path = require('path');
 const db = require('./dbConfig');
 
 function initializeDatabase(callback) {
-    // Verificar si la tabla programas ya existe
-    db.query("SHOW TABLES LIKE 'programas'", (err, rows) => {
+    // Verificar si las 6 tablas principales existen en la base de datos actual
+    const checkSql = `
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = DATABASE() 
+          AND table_name IN ('programas', 'empresas', 'tutores_academicos', 'estudiantes', 'convenios', 'practicas')
+    `;
+
+    db.query(checkSql, (err, rows) => {
         if (err) {
             console.error('Error verificando existencia de tablas:', err.message);
             if (callback) callback(err);
             return;
         }
 
-        if (rows && rows.length > 0) {
-            console.log('Las tablas de la base de datos ya existen. Omitiendo inicializacion automatica.');
+        if (rows && rows.length === 6) {
+            console.log('Las 6 tablas del modelo ya existen en la base de datos.');
             if (callback) callback(null);
             return;
         }
 
-        console.log('Tablas no encontradas. Inicializando estructura y datos desde schema.sql...');
+        console.log(`Se detectaron ${rows ? rows.length : 0} de 6 tablas. Ejecutando schema.sql para inicializar estructura y 10 registros por tabla...`);
         const schemaPath = path.join(__dirname, '..', '..', 'schema.sql');
         
         if (!fs.existsSync(schemaPath)) {
             console.warn('No se encontro el archivo schema.sql en:', schemaPath);
-            if (callback) callback(null);
+            if (callback) callback(new Error('Archivo schema.sql no encontrado'));
             return;
         }
 
@@ -35,7 +42,7 @@ function initializeDatabase(callback) {
                 if (callback) callback(execErr);
                 return;
             }
-            console.log('Base de datos inicializada con exito (tablas y 10 registros por tabla creados).');
+            console.log('Base de datos inicializada exitosamente (6 tablas creadas con 10 registros cada una).');
             if (callback) callback(null);
         });
     });

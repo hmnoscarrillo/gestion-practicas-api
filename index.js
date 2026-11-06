@@ -50,6 +50,16 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Endpoint de inicializacion de base de datos
+app.all('/api/init-db', (req, res) => {
+    initDb((err) => {
+        if (err) {
+            return res.status(500).json({ success: false, message: 'Error al inicializar la base de datos', error: err.message });
+        }
+        res.status(200).json({ success: true, message: 'Base de datos verificada/inicializada exitosamente con 6 tablas y 10 registros por tabla.' });
+    });
+});
+
 // Registrar rutas de la API segun la estructura requerida
 app.use('/api/programas', programaRoutes);
 app.use('/api/empresas', empresaRoutes);

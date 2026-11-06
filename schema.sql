@@ -3,10 +3,6 @@
 -- Taller Evaluativo 3er Corte - Base de datos MySQL en la Nube
 -- ============================================================
 
--- Crear base de datos (si aplica en entorno local; en Railway se usa la asignada)
-CREATE DATABASE IF NOT EXISTS gestion_practicas;
-USE gestion_practicas;
-
 -- Desactivar temporalmente verificacion de claves foraneas para creacion limpia
 SET FOREIGN_KEY_CHECKS = 0;
 
