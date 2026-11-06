@@ -1,0 +1,453 @@
+{
+  "info": {
+    "_postman_id": "a91f4d38-23bb-4d56-a97e-d9e75525b01a",
+    "name": "Gestion Practicas Profesionales - CRUD API",
+    "description": "Coleccion de pruebas completas de API REST para el Taller 3er Corte. Ejecuta el ciclo de vida CRUD completo sobre la tabla principal con mayor numero de relaciones (practicas) y verifica los casos de exito y error.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "createdId",
+      "value": "11",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Informacion",
+      "item": [
+        {
+          "name": "Consultar Raiz API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Verifica que el servicio este en linea y retorna los modulos disponibles."
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. CRUD Tabla Principal (practicas)",
+      "description": "Pruebas sobre la entidad con mas relaciones (5 llaves foraneas: estudiante_id, empresa_id, programa_id, convenio_id, tutor_academico_id).",
+      "item": [
+        {
+          "name": "READ 1: Listar todas las practicas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Retorna lista con datos\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.data.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/getPracticas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "getPracticas"]
+            },
+            "description": "Obtiene la lista completa de practicas profesionales con los datos cruzados mediante JOIN (estudiante, empresa, programa, convenio y tutor)."
+          },
+          "response": []
+        },
+        {
+          "name": "READ 2: Consultar practica por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Detalle de practica contiene campos correctos\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.data.id).to.eql(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/getPracticaById/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "getPracticaById", "1"]
+            },
+            "description": "Lee el registro individual de la practica ID 1 con su detalle."
+          },
+          "response": []
+        },
+        {
+          "name": "CREATE: Registrar nueva practica (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.idInsertado) {",
+                  "    pm.collectionVariables.set(\"createdId\", json.data.idInsertado.toString());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_practica\": \"PRAC-2026-TEST-99\",\n  \"estudiante_id\": 2,\n  \"empresa_id\": 3,\n  \"programa_id\": 2,\n  \"convenio_id\": 3,\n  \"tutor_academico_id\": 2,\n  \"cargo_practicante\": \"Practicante de Automatizacion y QA\",\n  \"fecha_inicio\": \"2026-08-01\",\n  \"fecha_fin\": \"2026-12-15\",\n  \"modalidad\": \"Hibrido\",\n  \"horas_totales\": 380,\n  \"estado\": \"En curso\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/postPractica",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "postPractica"]
+            },
+            "description": "Crea una nueva practica profesional en la base de datos vinculando estudiante 2, empresa 3, programa 2, convenio 3 y tutor 2."
+          },
+          "response": []
+        },
+        {
+          "name": "UPDATE: Actualizar practica (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Mensaje confirma actualizacion exitosa\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_practica\": \"PRAC-2026-TEST-99\",\n  \"estudiante_id\": 2,\n  \"empresa_id\": 3,\n  \"programa_id\": 2,\n  \"convenio_id\": 3,\n  \"tutor_academico_id\": 2,\n  \"cargo_practicante\": \"Ingeniero QA Junior en Automatizacion\",\n  \"fecha_inicio\": \"2026-08-01\",\n  \"fecha_fin\": \"2026-12-20\",\n  \"modalidad\": \"Remoto\",\n  \"horas_totales\": 400,\n  \"estado\": \"En curso\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/putPractica/{{createdId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "putPractica", "{{createdId}}"]
+            },
+            "description": "Actualiza el cargo, la modalidad a 'Remoto' y las horas totales a 400 del registro recien creado."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE: Eliminar practica",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Mensaje confirma eliminacion exitosa\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/deletePractica/{{createdId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "deletePractica", "{{createdId}}"]
+            },
+            "description": "Elimina el registro de la practica que fue creada en la prueba previa."
+          },
+          "response": []
+        },
+        {
+          "name": "VERIFY: Comprobar que ya no existe (404 Not Found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Respuesta confirma recurso no encontrado\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/getPracticaById/{{createdId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "getPracticaById", "{{createdId}}"]
+            },
+            "description": "Requisito de la Fase 3: Verifica despues con una lectura que el registro efectivamente ya no existe retornando 404."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Casos de Error y Validaciones",
+      "description": "Demostracion de validacion de entradas, control de errores y codigos de estado HTTP adecuados.",
+      "item": [
+        {
+          "name": "Error 404: Consultar ID Inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/getPracticaById/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "getPracticaById", "999999"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error 400: Campos Obligatorios Faltantes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_practica\": \"INCOMPLETO-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/postPractica",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "postPractica"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error 409: Violacion de Clave Unica (Codigo Repetido)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 409 Conflict\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_practica\": \"PRAC-2026-001\",\n  \"estudiante_id\": 1,\n  \"empresa_id\": 1,\n  \"programa_id\": 1,\n  \"convenio_id\": 1,\n  \"tutor_academico_id\": 1,\n  \"cargo_practicante\": \"Repetido\",\n  \"fecha_inicio\": \"2026-02-01\",\n  \"fecha_fin\": \"2026-07-31\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/practicas/postPractica",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "practicas", "postPractica"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Modulos Adicionales (Consultas GET)",
+      "item": [
+        {
+          "name": "GET Programas Academicos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/programas/getProgramas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "programas", "getProgramas"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Empresas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/empresas/getEmpresas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "empresas", "getEmpresas"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tutores Academicos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tutores/getTutores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tutores", "getTutores"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Estudiantes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estudiantes/getEstudiantes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estudiantes", "getEstudiantes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Convenios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/convenios/getConvenios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "convenios", "getConvenios"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
