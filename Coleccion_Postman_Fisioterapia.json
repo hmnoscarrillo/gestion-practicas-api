@@ -1,0 +1,364 @@
+{
+	"info": {
+		"_postman_id": "f8a12c34-7b90-4e12-89cd-fisioterapia2026",
+		"name": "FisioSalud - API Centro de Fisioterapia (CRUD & Pruebas)",
+		"description": "Colección completa para la validación y pruebas de la API REST del Centro de Fisioterapia y Rehabilitación Integral 'FisioSalud'. Incluye ciclo CRUD completo en orden lógico, pruebas de casos de error (400, 404, 409) y assertions automáticas con variables de entorno.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://api-gestion-practicas-production.up.railway.app",
+			"type": "string"
+		},
+		{
+			"key": "id_sesion_creada",
+			"value": "11",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "01 - Health & Verificacion",
+			"item": [
+				{
+					"name": "01. GET - Verificar Estado de la API (Health Check)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('API esta operativa', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql('UP');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Verifica que el servicio Express y el despliegue en Railway se encuentren en línea."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "02 - Ciclo CRUD Tabla Central (sesiones_terapia)",
+			"item": [
+				{
+					"name": "02. POST - Crear Nueva Sesion de Fisioterapia",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test('Sesion creada exitosamente con ID retornado', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data).to.have.property('id_sesion');",
+									"    pm.collectionVariables.set('id_sesion_creada', jsonData.data.id_sesion);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"codigo_sesion\": \"SES-TEST-001\",\n  \"id_paciente\": 1,\n  \"id_fisioterapeuta\": 3,\n  \"id_servicio\": 2,\n  \"id_sede\": 1,\n  \"id_historia\": 1,\n  \"fecha_sesion\": \"2026-11-15\",\n  \"hora_inicio\": \"10:00:00\",\n  \"hora_fin\": \"10:45:00\",\n  \"numero_sesion\": 1,\n  \"escala_dolor_eva\": 7,\n  \"observaciones_evolucion\": \"Sesion inicial de prueba: evaluacion de movilidad articular lumbar\",\n  \"estado_sesion\": \"Programada\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sesiones/createSesion",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sesiones", "createSesion"]
+						},
+						"description": "Crea una nueva sesión clínica vinculando las 5 entidades relacionadas (Paciente, Fisioterapeuta, Servicio, Sede e Historia Clínica)."
+					},
+					"response": []
+				},
+				{
+					"name": "03. GET - Listar Todas las Sesiones (con JOINs)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Retorna arreglo con registros completos y relaciones', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    pm.expect(jsonData.data.length).to.be.above(0);",
+									"    pm.expect(jsonData.data[0]).to.have.property('paciente_nombre');",
+									"    pm.expect(jsonData.data[0]).to.have.property('fisioterapeuta_nombre');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/sesiones/getSesiones",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sesiones", "getSesiones"]
+						},
+						"description": "Obtiene la lista completa de sesiones clínicas con información resuelta de todas las tablas relacionadas."
+					},
+					"response": []
+				},
+				{
+					"name": "04. GET - Consultar Sesion por ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('La sesion corresponde al ID consultado', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data.id_sesion).to.eql(Number(pm.collectionVariables.get('id_sesion_creada') || 11));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/sesiones/getSesionById/{{id_sesion_creada}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sesiones", "getSesionById", "{{id_sesion_creada}}"]
+						},
+						"description": "Consulta el registro específico de la sesión creada utilizando la variable dinámica id_sesion_creada."
+					},
+					"response": []
+				},
+				{
+					"name": "05. PUT - Actualizar Sesion Clinica",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Sesion actualizada correctamente', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.message).to.include('actualizada exitosamente');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"codigo_sesion\": \"SES-TEST-001\",\n  \"id_paciente\": 1,\n  \"id_fisioterapeuta\": 3,\n  \"id_servicio\": 2,\n  \"id_sede\": 1,\n  \"id_historia\": 1,\n  \"fecha_sesion\": \"2026-11-15\",\n  \"hora_inicio\": \"10:00:00\",\n  \"hora_fin\": \"10:45:00\",\n  \"numero_sesion\": 1,\n  \"escala_dolor_eva\": 4,\n  \"observaciones_evolucion\": \"Sesion completada con exito. Dolor EVA disminuyo de 7 a 4 tras aplicacion de terapia manual articular.\",\n  \"estado_sesion\": \"Realizada\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sesiones/updateSesion/{{id_sesion_creada}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sesiones", "updateSesion", "{{id_sesion_creada}}"]
+						},
+						"description": "Actualiza la sesión terapéutica modificando el dolor EVA y cambiando su estado a 'Realizada'."
+					},
+					"response": []
+				},
+				{
+					"name": "06. DELETE - Eliminar Sesion Clinica",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Sesion eliminada exitosamente', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.message).to.include('eliminada exitosamente');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/sesiones/deleteSesion/{{id_sesion_creada}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sesiones", "deleteSesion", "{{id_sesion_creada}}"]
+						},
+						"description": "Elimina la sesión de prueba de la base de datos completando el ciclo CRUD."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "03 - Casos de Error y Validaciones",
+			"item": [
+				{
+					"name": "07. ERROR 404 - Consultar ID Inexistente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 404 Not Found', function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"pm.test('Respuesta de error estructurada', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"    pm.expect(jsonData.message).to.include('no encontrada');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/sesiones/getSesionById/99999",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sesiones", "getSesionById", "99999"]
+						},
+						"description": "Verifica que consultar un ID inexistente retorne código 404 y un mensaje claro."
+					},
+					"response": []
+				},
+				{
+					"name": "08. ERROR 400 - Campos Obligatorios Faltantes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 400 Bad Request', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test('Mensaje de validacion de campos requeridos', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"    pm.expect(jsonData.message).to.include('Campos obligatorios');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"codigo_sesion\": \"SES-INCOMPLETA\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sesiones/createSesion",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sesiones", "createSesion"]
+						},
+						"description": "Comprueba que la API rechace peticiones que carecen de campos obligatorios requeridos."
+					},
+					"response": []
+				},
+				{
+					"name": "09. ERROR 409 - Clave Duplicada (Violacion UNIQUE)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 409 Conflict', function () {",
+									"    pm.response.to.have.status(409);",
+									"});",
+									"pm.test('Mensaje de conflicto por valor duplicado', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"    pm.expect(jsonData.message).to.include('Conflicto');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cedula\": \"1098765432\",\n  \"nombres\": \"Duplicado\",\n  \"apellidos\": \"Prueba\",\n  \"telefono\": \"3009999999\",\n  \"email\": \"carlos.gomez@gmail.com\",\n  \"fecha_nacimiento\": \"1990-01-01\",\n  \"genero\": \"M\",\n  \"eps\": \"Sura\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pacientes/createPaciente",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pacientes", "createPaciente"]
+						},
+						"description": "Verifica que el motor MySQL y la API capturen la violación de restricción de unicidad (cédula ya existente)."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

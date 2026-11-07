@@ -3,12 +3,12 @@ const path = require('path');
 const db = require('./dbConfig');
 
 function initializeDatabase(callback) {
-    // Verificar si las 6 tablas principales existen en la base de datos actual
+    // Verificar si las 6 tablas principales de Fisioterapia existen en la base de datos
     const checkSql = `
         SELECT table_name 
         FROM information_schema.tables 
         WHERE table_schema = DATABASE() 
-          AND table_name IN ('programas', 'empresas', 'tutores_academicos', 'estudiantes', 'convenios', 'practicas')
+          AND table_name IN ('pacientes', 'fisioterapeutas', 'servicios_terapia', 'sedes', 'historias_clinicas', 'sesiones_terapia')
     `;
 
     db.query(checkSql, (err, rows) => {
@@ -19,12 +19,12 @@ function initializeDatabase(callback) {
         }
 
         if (rows && rows.length === 6) {
-            console.log('Las 6 tablas del modelo ya existen en la base de datos.');
+            console.log('Las 6 tablas del modelo de Centro de Fisioterapia ya existen en la base de datos.');
             if (callback) callback(null);
             return;
         }
 
-        console.log(`Se detectaron ${rows ? rows.length : 0} de 6 tablas. Ejecutando schema.sql para inicializar estructura y 10 registros por tabla...`);
+        console.log(`Se detectaron ${rows ? rows.length : 0} de 6 tablas de Fisioterapia. Ejecutando schema.sql para inicializar estructura y 10 registros por tabla...`);
         const schemaPath = path.join(__dirname, '..', '..', 'schema.sql');
         
         if (!fs.existsSync(schemaPath)) {
@@ -42,23 +42,30 @@ function initializeDatabase(callback) {
                 if (callback) callback(execErr);
                 return;
             }
-            console.log('Base de datos inicializada exitosamente (6 tablas creadas con 10 registros cada una).');
+            console.log('Base de datos de Centro de Fisioterapia inicializada exitosamente (6 tablas creadas con 10 registros cada una).');
             if (callback) callback(null);
         });
     });
 }
 
-// Permitir ejecucion directa por CLI
-if (require.main === module) {
-    initializeDatabase((err) => {
+// Opcion para forzar reinicializacion limpia
+function forceResetDatabase(callback) {
+    const schemaPath = path.join(__dirname, '..', '..', 'schema.sql');
+    if (!fs.existsSync(schemaPath)) {
+        if (callback) callback(new Error('Archivo schema.sql no encontrado'));
+        return;
+    }
+    const sql = fs.readFileSync(schemaPath, 'utf8');
+    db.query(sql, (err) => {
         if (err) {
-            console.error('Fallo en la inicializacion:', err);
-            process.exit(1);
-        } else {
-            console.log('Proceso de inicializacion finalizado.');
-            process.exit(0);
+            console.error('Error forzando reinicializacion de base de datos:', err.message);
+            if (callback) callback(err);
+            return;
         }
+        console.log('Base de datos reinicializada con exito.');
+        if (callback) callback(null);
     });
 }
 
 module.exports = initializeDatabase;
+module.exports.forceReset = forceResetDatabase;

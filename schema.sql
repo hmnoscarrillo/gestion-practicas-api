@@ -1,11 +1,18 @@
--- ============================================================
--- BASE DE DATOS: GESTION DE PRACTICAS PROFESIONALES
--- Taller Evaluativo 3er Corte - Base de datos MySQL en la Nube
--- ============================================================
+-- ============================================================================
+-- PROYECTO: SISTEMA DE GESTION CLINICA Y TERAPÉUTICA - CENTRO DE FISIOTERAPIA "FISIOSALUD"
+-- TALLER EVALUATIVO CORTE 3 - INGENIERÍA DE SOFTWARE / BASES DE DATOS
+-- AUTOR: IVÁN CARRILLO
+-- ============================================================================
 
--- Desactivar temporalmente verificacion de claves foraneas para creacion limpia
-SET FOREIGN_KEY_CHECKS = 0;
+-- Eliminar tablas si existen en orden inverso a las llaves foráneas para evitar conflictos
+DROP TABLE IF EXISTS sesiones_terapia;
+DROP TABLE IF EXISTS historias_clinicas;
+DROP TABLE IF EXISTS servicios_terapia;
+DROP TABLE IF EXISTS sedes;
+DROP TABLE IF EXISTS fisioterapeutas;
+DROP TABLE IF EXISTS pacientes;
 
+-- También limpiar tablas del tema anterior si existieran en la base de datos
 DROP TABLE IF EXISTS practicas;
 DROP TABLE IF EXISTS convenios;
 DROP TABLE IF EXISTS estudiantes;
@@ -13,255 +20,197 @@ DROP TABLE IF EXISTS tutores_academicos;
 DROP TABLE IF EXISTS empresas;
 DROP TABLE IF EXISTS programas;
 
-SET FOREIGN_KEY_CHECKS = 1;
-
--- ============================================================
--- TABLA 1: PROGRAMAS ACADEMICOS
--- Finalidad: Registra las carreras y programas de educacion
--- superior a los que pertenecen los estudiantes y convenios.
--- ============================================================
-CREATE TABLE programas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    codigo VARCHAR(20) NOT NULL UNIQUE,
-    nombre VARCHAR(120) NOT NULL,
-    facultad VARCHAR(100) NOT NULL,
-    nivel VARCHAR(50) NOT NULL,
-    duracion_semestres INT NOT NULL,
+-- ============================================================================
+-- 1. TABLA: pacientes
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS pacientes (
+    id_paciente INT AUTO_INCREMENT PRIMARY KEY,
+    cedula VARCHAR(20) NOT NULL UNIQUE,
+    nombres VARCHAR(80) NOT NULL,
+    apellidos VARCHAR(80) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    fecha_nacimiento DATE NOT NULL,
+    genero ENUM('M', 'F', 'Otro') NOT NULL DEFAULT 'M',
+    eps VARCHAR(60) NOT NULL,
     estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- TABLA 2: EMPRESAS
--- Finalidad: Almacena las organizaciones publicas o privadas
--- donde los estudiantes realizan sus practicas profesionales.
--- ============================================================
-CREATE TABLE empresas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nit VARCHAR(20) NOT NULL UNIQUE,
-    razon_social VARCHAR(150) NOT NULL,
-    sector_economico VARCHAR(100) NOT NULL,
-    ciudad VARCHAR(100) NOT NULL,
-    direccion VARCHAR(200) NOT NULL,
+-- ============================================================================
+-- 2. TABLA: fisioterapeutas
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS fisioterapeutas (
+    id_fisioterapeuta INT AUTO_INCREMENT PRIMARY KEY,
+    tarjeta_profesional VARCHAR(30) NOT NULL UNIQUE,
+    nombres VARCHAR(80) NOT NULL,
+    apellidos VARCHAR(80) NOT NULL,
+    especialidad VARCHAR(100) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
-    correo VARCHAR(120) NOT NULL UNIQUE,
-    estado ENUM('Activa', 'Inactiva') NOT NULL DEFAULT 'Activa',
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
--- TABLA 3: TUTORES ACADEMICOS
--- Finalidad: Registra los docentes responsables del acompanamiento,
--- supervision y evaluacion academica de las practicas.
--- ============================================================
-CREATE TABLE tutores_academicos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    documento VARCHAR(20) NOT NULL UNIQUE,
-    nombres VARCHAR(100) NOT NULL,
-    apellidos VARCHAR(100) NOT NULL,
-    correo VARCHAR(120) NOT NULL UNIQUE,
-    telefono VARCHAR(20) NOT NULL,
-    cargo VARCHAR(100) NOT NULL,
-    programa_id INT NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    anios_experiencia INT NOT NULL DEFAULT 1,
     estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_tutor_programa FOREIGN KEY (programa_id) 
-        REFERENCES programas(id) ON UPDATE CASCADE ON DELETE RESTRICT
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- TABLA 4: ESTUDIANTES
--- Finalidad: Registra a los alumnos que han cumplido con los creditos
--- necesarios para optar por su modalidad de practica profesional.
--- ============================================================
-CREATE TABLE estudiantes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    documento VARCHAR(20) NOT NULL UNIQUE,
-    nombres VARCHAR(100) NOT NULL,
-    apellidos VARCHAR(100) NOT NULL,
-    correo VARCHAR(120) NOT NULL UNIQUE,
+-- ============================================================================
+-- 3. TABLA: servicios_terapia
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS servicios_terapia (
+    id_servicio INT AUTO_INCREMENT PRIMARY KEY,
+    codigo_servicio VARCHAR(20) NOT NULL UNIQUE,
+    nombre_servicio VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    duracion_minutos INT NOT NULL DEFAULT 45,
+    costo DECIMAL(10,2) NOT NULL,
+    modalidad ENUM('Presencial', 'Domiciliaria', 'Gimnasio Terapéutico') NOT NULL DEFAULT 'Presencial',
+    estado ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- 4. TABLA: sedes
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS sedes (
+    id_sede INT AUTO_INCREMENT PRIMARY KEY,
+    codigo_sede VARCHAR(20) NOT NULL UNIQUE,
+    nombre_sede VARCHAR(100) NOT NULL,
+    ciudad VARCHAR(60) NOT NULL,
+    direccion VARCHAR(150) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
-    semestre INT NOT NULL,
-    programa_id INT NOT NULL,
-    estado ENUM('Activo', 'Inactivo', 'Graduado') NOT NULL DEFAULT 'Activo',
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_estudiante_programa FOREIGN KEY (programa_id) 
-        REFERENCES programas(id) ON UPDATE CASCADE ON DELETE RESTRICT
+    capacidad_boxes INT NOT NULL DEFAULT 6,
+    estado ENUM('Operativa', 'En Mantenimiento', 'Cerrada') NOT NULL DEFAULT 'Operativa',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- TABLA 5: CONVENIOS
--- Finalidad: Modela los acuerdos institucionales formalizados
--- entre la institucion educativa (segun programa) y la empresa.
--- ============================================================
-CREATE TABLE convenios (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    numero_convenio VARCHAR(30) NOT NULL UNIQUE,
-    empresa_id INT NOT NULL,
-    programa_id INT NOT NULL,
-    fecha_inicio DATE NOT NULL,
-    fecha_fin DATE NOT NULL,
-    cupos_disponibles INT NOT NULL DEFAULT 5,
-    estado ENUM('Vigente', 'Vencido', 'Cancelado') NOT NULL DEFAULT 'Vigente',
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_convenio_empresa FOREIGN KEY (empresa_id) 
-        REFERENCES empresas(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_convenio_programa FOREIGN KEY (programa_id) 
-        REFERENCES programas(id) ON UPDATE CASCADE ON DELETE RESTRICT
+-- ============================================================================
+-- 5. TABLA: historias_clinicas
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS historias_clinicas (
+    id_historia INT AUTO_INCREMENT PRIMARY KEY,
+    numero_expediente VARCHAR(30) NOT NULL UNIQUE,
+    id_paciente INT NOT NULL,
+    fecha_apertura DATE NOT NULL,
+    diagnostico_cie VARCHAR(80) NOT NULL,
+    motivo_consulta TEXT NOT NULL,
+    antecedentes_medicos TEXT NOT NULL,
+    total_sesiones_prescritas INT NOT NULL DEFAULT 10,
+    estado ENUM('En Tratamiento', 'De Alta', 'Suspendido') NOT NULL DEFAULT 'En Tratamiento',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_historia_paciente FOREIGN KEY (id_paciente) 
+        REFERENCES pacientes(id_paciente) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- TABLA 6: PRACTICAS (TABLA PRINCIPAL CON MAYOR NUMERO DE RELACIONES)
--- Finalidad: Integra y materializa la ejecucion de la practica
--- profesional asignando un estudiante a una empresa bajo un convenio,
--- con la supervision de un tutor academico y en su respectivo programa.
--- ============================================================
-CREATE TABLE practicas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    codigo_practica VARCHAR(30) NOT NULL UNIQUE,
-    estudiante_id INT NOT NULL,
-    empresa_id INT NOT NULL,
-    programa_id INT NOT NULL,
-    convenio_id INT NOT NULL,
-    tutor_academico_id INT NOT NULL,
-    cargo_practicante VARCHAR(120) NOT NULL,
-    fecha_inicio DATE NOT NULL,
-    fecha_fin DATE NOT NULL,
-    modalidad ENUM('Presencial', 'Remoto', 'Hibrido') NOT NULL DEFAULT 'Presencial',
-    horas_totales INT NOT NULL DEFAULT 320,
-    estado ENUM('En curso', 'Finalizada', 'Cancelada', 'Pendiente') NOT NULL DEFAULT 'En curso',
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_practica_estudiante FOREIGN KEY (estudiante_id) 
-        REFERENCES estudiantes(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_practica_empresa FOREIGN KEY (empresa_id) 
-        REFERENCES empresas(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_practica_programa FOREIGN KEY (programa_id) 
-        REFERENCES programas(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_practica_convenio FOREIGN KEY (convenio_id) 
-        REFERENCES convenios(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_practica_tutor FOREIGN KEY (tutor_academico_id) 
-        REFERENCES tutores_academicos(id) ON UPDATE CASCADE ON DELETE RESTRICT
+-- ============================================================================
+-- 6. TABLA CENTRAL: sesiones_terapia
+-- (Relaciona a Paciente, Fisioterapeuta, Servicio, Sede e Historia Clínica)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS sesiones_terapia (
+    id_sesion INT AUTO_INCREMENT PRIMARY KEY,
+    codigo_sesion VARCHAR(30) NOT NULL UNIQUE,
+    id_paciente INT NOT NULL,
+    id_fisioterapeuta INT NOT NULL,
+    id_servicio INT NOT NULL,
+    id_sede INT NOT NULL,
+    id_historia INT NOT NULL,
+    fecha_sesion DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    numero_sesion INT NOT NULL DEFAULT 1,
+    escala_dolor_eva INT NOT NULL DEFAULT 5,
+    observaciones_evolucion TEXT,
+    estado_sesion ENUM('Programada', 'Realizada', 'Cancelada', 'Reprogramada') NOT NULL DEFAULT 'Programada',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_sesion_paciente FOREIGN KEY (id_paciente) 
+        REFERENCES pacientes(id_paciente) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_sesion_fisioterapeuta FOREIGN KEY (id_fisioterapeuta) 
+        REFERENCES fisioterapeutas(id_fisioterapeuta) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_sesion_servicio FOREIGN KEY (id_servicio) 
+        REFERENCES servicios_terapia(id_servicio) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_sesion_sede FOREIGN KEY (id_sede) 
+        REFERENCES sedes(id_sede) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_sesion_historia FOREIGN KEY (id_historia) 
+        REFERENCES historias_clinicas(id_historia) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================================
+-- INSERCIÓN DE DATOS: 10 REGISTROS REALES POR CADA TABLA (60 REGISTROS)
+-- ============================================================================
 
--- ============================================================
--- INSERCION DE DATOS DE EJEMPLO (MINIMO 10 REGISTROS POR TABLA)
--- ============================================================
+-- 1. Pacientes (10 registros)
+INSERT INTO pacientes (id_paciente, cedula, nombres, apellidos, telefono, email, fecha_nacimiento, genero, eps, estado) VALUES
+(1, '1098765432', 'Carlos Andrés', 'Gómez Peña', '3104567890', 'carlos.gomez@gmail.com', '1992-04-15', 'M', 'Sura', 'Activo'),
+(2, '1098765433', 'Laura Marcela', 'Rojas Pinzón', '3115678901', 'laura.rojas@hotmail.com', '1995-08-22', 'F', 'Sanitas', 'Activo'),
+(3, '1098765434', 'Diego Fernando', 'Martínez Silva', '3126789012', 'diego.martinez@yahoo.com', '1988-11-30', 'M', 'Compensar', 'Activo'),
+(4, '1098765435', 'Valentina', 'Morales Vargas', '3137890123', 'valentina.morales@outlook.com', '2001-02-14', 'F', 'Salud Total', 'Activo'),
+(5, '1098765436', 'Juan Sebastián', 'Ortiz Castro', '3148901234', 'juan.ortiz@gmail.com', '1990-07-09', 'M', 'Nueva EPS', 'Activo'),
+(6, '1098765437', 'Mariana Lucía', 'Pardo Jiménez', '3159012345', 'mariana.pardo@gmail.com', '1997-12-03', 'F', 'Famisanar', 'Activo'),
+(7, '1098765438', 'Andrés Felipe', 'Beltrán Hoyos', '3160123456', 'andres.beltran@hotmail.com', '1985-06-18', 'M', 'Sura', 'Activo'),
+(8, '1098765439', 'Camila Andrea', 'Duarte Serrano', '3171234567', 'camila.duarte@gmail.com', '1999-09-25', 'F', 'Sanitas', 'Activo'),
+(9, '1098765440', 'Mateo Alejandro', 'Ríos Navas', '3182345678', 'mateo.rios@gmail.com', '1993-03-11', 'M', 'Compensar', 'Activo'),
+(10, '1098765441', 'Sofía Elena', 'Quiroga Mendoza', '3193456789', 'sofia.quiroga@outlook.com', '1996-10-29', 'F', 'Salud Total', 'Activo');
 
--- 1. Insertar en PROGRAMAS (10 registros)
-INSERT INTO programas (id, codigo, nombre, facultad, nivel, duracion_semestres, estado) VALUES
-(1, 'PRG-SIS-01', 'Ingenieria de Sistemas', 'Facultad de Ingenieria', 'Pregrado', 10, 'Activo'),
-(2, 'PRG-IND-02', 'Ingenieria Industrial', 'Facultad de Ingenieria', 'Pregrado', 10, 'Activo'),
-(3, 'PRG-ADM-03', 'Administracion de Empresas', 'Facultad de Ciencias Economicas', 'Pregrado', 9, 'Activo'),
-(4, 'PRG-CON-04', 'Contaduria Publica', 'Facultad de Ciencias Economicas', 'Pregrado', 9, 'Activo'),
-(5, 'PRG-PSI-05', 'Psicologia Organizacional', 'Facultad de Ciencias Humanas', 'Pregrado', 10, 'Activo'),
-(6, 'PRG-DER-06', 'Derecho', 'Facultad de Ciencias Juridicas', 'Pregrado', 10, 'Activo'),
-(7, 'PRG-COM-07', 'Comunicacion Social y Periodismo', 'Facultad de Ciencias Humanas', 'Pregrado', 8, 'Activo'),
-(8, 'PRG-DIS-08', 'Diseno Grafico Digital', 'Facultad de Artes y Comunicacion', 'Pregrado', 8, 'Activo'),
-(9, 'PRG-TEC-09', 'Tecnologia en Desarrollo de Software', 'Facultad de Ingenieria', 'Tecnologia', 6, 'Activo'),
-(10, 'PRG-MKT-10', 'Mercadeo y Publicidad', 'Facultad de Ciencias Economicas', 'Pregrado', 8, 'Activo');
+-- 2. Fisioterapeutas (10 registros)
+INSERT INTO fisioterapeutas (id_fisioterapeuta, tarjeta_profesional, nombres, apellidos, especialidad, telefono, email, anios_experiencia, estado) VALUES
+(1, 'TP-1001', 'Claudia Patricia', 'Suárez Méndez', 'Fisioterapia Deportiva y Readaptación', '3001234501', 'claudia.suarez@fisiosalud.com', 8, 'Activo'),
+(2, 'TP-1002', 'Javier Esteban', 'Caicedo Ruiz', 'Fisioterapia Neurológica y Neurorehabilitación', '3001234502', 'javier.caicedo@fisiosalud.com', 10, 'Activo'),
+(3, 'TP-1003', 'Mónica Liliana', 'Torres Vega', 'Terapia Manual Ortopédica', '3001234503', 'monica.torres@fisiosalud.com', 6, 'Activo'),
+(4, 'TP-1004', 'Felipe Eduardo', 'Lozano Prieto', 'Fisioterapia Traumatológica y Postquirúrgica', '3001234504', 'felipe.lozano@fisiosalud.com', 12, 'Activo'),
+(5, 'TP-1005', 'Natalia Andrea', 'Guzmán Ríos', 'Fisioterapia Pediátrica y Estimulación Temprana', '3001234505', 'natalia.guzman@fisiosalud.com', 7, 'Activo'),
+(6, 'TP-1006', 'Camilo José', 'Bernal Montoya', 'Kinesiología y Biomecánica Clínica', '3001234506', 'camilo.bernal@fisiosalud.com', 5, 'Activo'),
+(7, 'TP-1007', 'Paola Marcela', 'Rincón Henao', 'Fisioterapia Respiratoria y Cardiopulmonar', '3001234507', 'paola.rincon@fisiosalud.com', 9, 'Activo'),
+(8, 'TP-1008', 'Gabriel Ricardo', 'Meza Forero', 'Punción Seca y Dolor Miofascial', '3001234508', 'gabriel.meza@fisiosalud.com', 4, 'Activo'),
+(9, 'TP-1009', 'Sandra Viviana', 'Arévalo Cruz', 'Reeducación Postural Global (RPG)', '3001234509', 'sandra.arevalo@fisiosalud.com', 11, 'Activo'),
+(10, 'TP-1010', 'Jorge Alberto', 'Niño Galvis', 'Fisioterapia Geriátrica y Mantenimiento Funcional', '3001234510', 'jorge.nino@fisiosalud.com', 14, 'Activo');
 
--- 2. Insertar en EMPRESAS (10 registros)
-INSERT INTO empresas (id, nit, razon_social, sector_economico, ciudad, direccion, telefono, correo, estado) VALUES
-(1, '900123456-1', 'Bancolombia S.A.', 'Financiero y Bancario', 'Medellin', 'Carrera 48 # 26-85', '6044040000', 'talento@bancolombia.com.co', 'Activa'),
-(2, '860001002-3', 'Ecopetrol S.A.', 'Energia y Petroleos', 'Bogota', 'Carrera 13 # 36-24', '6012345000', 'practicas@ecopetrol.com.co', 'Activa'),
-(3, '890900608-9', 'Grupo Nutresa S.A.', 'Alimentos y Consumo', 'Medellin', 'Calle 8 Sur # 52-67', '6043655600', 'seleccion@gruponutresa.com', 'Activa'),
-(4, '800153993-7', 'Claro Colombia S.A.S.', 'Telecomunicaciones', 'Bogota', 'Carrera 68A # 24B-10', '6017420000', 'rrhh@claro.com.co', 'Activa'),
-(5, '901234567-2', 'Rappi Colombia S.A.S.', 'Tecnologia y Logistica', 'Bogota', 'Calle 93 # 13-45', '6013145678', 'talent@rappi.com', 'Activa'),
-(6, '890101790-4', 'Cementos Argos S.A.', 'Construccion y Materiales', 'Barranquilla', 'Via 40 # 73-290', '6053614000', 'contacto@argos.com.co', 'Activa'),
-(7, '900876543-5', 'Globant Colombia S.A.S.', 'Tecnologia y Software', 'Bogota', 'Carrera 11 # 86-53', '6017462000', 'recruiting-co@globant.com', 'Activa'),
-(8, '860005224-8', 'Carvajal Tecnologia y Servicios S.A.S.', 'Servicios Empresariales', 'Cali', 'Calle 29 Norte # 6A-40', '6026678000', 'talento@carvajal.com', 'Activa'),
-(9, '890903938-8', 'Almacenes Exito S.A.', 'Comercio al por Menor', 'Envigado', 'Carrera 48 # 32B Sur-139', '6046049696', 'rrhh@grupo-exito.com', 'Activa'),
-(10, '900543210-9', 'Mercado Libre Colombia LTDA', 'Comercio Electronico', 'Bogota', 'Carrera 17 # 93-09', '6014238000', 'jobs-co@mercadolibre.com', 'Activa');
+-- 3. Servicios de Terapia (10 registros)
+INSERT INTO servicios_terapia (id_servicio, codigo_servicio, nombre_servicio, descripcion, duracion_minutos, costo, modalidad, estado) VALUES
+(1, 'SRV-DEP01', 'Rehabilitación Funcional Deportiva', 'Terapia enfocada en lesiones de deportistas, desgarros musculares, esguinces y tendinopatías.', 60, 85000.00, 'Gimnasio Terapéutico', 'Activo'),
+(2, 'SRV-ORT02', 'Terapia Manual y Movilización Articular', 'Descompresión articular, manipulación fascial y técnicas artrocinemáticas avanzadas.', 45, 75000.00, 'Presencial', 'Activo'),
+(3, 'SRV-ELE03', 'Electroterapia y Ultrasonido Terapéutico', 'Modulación del dolor agudo con TENS, corrientes interferenciales y ultrasonido profundo.', 40, 60000.00, 'Presencial', 'Activo'),
+(4, 'SRV-RPG04', 'Reeducación Postural Global (RPG)', 'Corrección biomecánica de escoliosis, cifosis, hiperlordosis y alineación estructural.', 50, 90000.00, 'Presencial', 'Activo'),
+(5, 'SRV-PUN05', 'Punción Seca y Terapia Miofascial', 'Técnica invasiva neuromuscular para desactivar puntos gatillo y relajar contracturas severas.', 35, 80000.00, 'Presencial', 'Activo'),
+(6, 'SRV-NEU06', 'Neurorehabilitación Bobath y Kabat', 'Facilitación neuromuscular propioceptiva para secuelas de ACV, lesiones medulares o parálisis.', 60, 95000.00, 'Presencial', 'Activo'),
+(7, 'SRV-RES07', 'Fisioterapia Respiratoria', 'Maniobras de higiene bronquial, espirometría incentiva y fortalecimiento diafragmático.', 45, 70000.00, 'Presencial', 'Activo'),
+(8, 'SRV-POS08', 'Rehabilitación Postquirúrgica Articular', 'Protocolos tempranos y tardíos de movilidad post-artroscopia, plastias de ligamentos o prótesis.', 50, 85000.00, 'Presencial', 'Activo'),
+(9, 'SRV-DOM09', 'Fisioterapia Geriátrica a Domicilio', 'Terapia de mantenimiento motor, prevención de caídas y autonomía funcional en el hogar.', 60, 110000.00, 'Domiciliaria', 'Activo'),
+(10, 'SRV-HID10', 'Hidroterapia en Piscina Terapéutica', 'Ejercicios de bajo impacto con flotabilidad para artrosis, fibromialgia y descarga axial.', 45, 95000.00, 'Presencial', 'Activo');
 
--- 3. Insertar en TUTORES ACADEMICOS (10 registros)
-INSERT INTO tutores_academicos (id, documento, nombres, apellidos, correo, telefono, cargo, programa_id, estado) VALUES
-(1, '71234567', 'Carlos Alberto', 'Gomez Perez', 'carlos.gomez@universidad.edu.co', '3104567890', 'Docente Titular Investigador', 1, 'Activo'),
-(2, '43567890', 'Marta Lucia', 'Restrepo Ospina', 'marta.restrepo@universidad.edu.co', '3116543210', 'Coordinadora de Practicas', 2, 'Activo'),
-(3, '98765432', 'Andres Felipe', 'Jaramillo Mejia', 'andres.jaramillo@universidad.edu.co', '3127894561', 'Docente Asociado', 3, 'Activo'),
-(4, '32456789', 'Gloria Elena', 'Cardona Morales', 'gloria.cardona@universidad.edu.co', '3139871234', 'Docente de Planta', 4, 'Activo'),
-(5, '10345678', 'Jorge Ivan', 'Cano Henao', 'jorge.cano@universidad.edu.co', '3141237890', 'Tutor Academico Senior', 5, 'Activo'),
-(6, '70987654', 'Beatriz Eugenia', 'Munoz Zapata', 'beatriz.munoz@universidad.edu.co', '3152345678', 'Docente Titular', 6, 'Activo'),
-(7, '80123456', 'Mauricio', 'Ochoa Londono', 'mauricio.ochoa@universidad.edu.co', '3163456789', 'Director de Departamento', 7, 'Activo'),
-(8, '42876543', 'Sandra Milena', 'Alvarez Rios', 'sandra.alvarez@universidad.edu.co', '3174567890', 'Docente de Catedra', 8, 'Activo'),
-(9, '15987654', 'Hernan Dario', 'Velez Castrillon', 'hernan.velez@universidad.edu.co', '3185678901', 'Tutor de Software', 9, 'Activo'),
-(10, '10482910', 'Diana Marcela', 'Sanchez Duque', 'diana.sanchez@universidad.edu.co', '3196789012', 'Coordinadora de Proyectos', 10, 'Activo');
+-- 4. Sedes (10 registros)
+INSERT INTO sedes (id_sede, codigo_sede, nombre_sede, ciudad, direccion, telefono, capacidad_boxes, estado) VALUES
+(1, 'SED-BOG01', 'Sede Principal Chapinero', 'Bogotá', 'Calle 67 # 11-45', '(601) 745-8901', 12, 'Operativa'),
+(2, 'SED-BOG02', 'Sede Norte Santa Bárbara', 'Bogotá', 'Carrera 15 # 119-24', '(601) 745-8902', 10, 'Operativa'),
+(3, 'SED-BOG03', 'Sede Salitre Deportivo', 'Bogotá', 'Av. La Esperanza # 68B-31', '(601) 745-8903', 8, 'Operativa'),
+(4, 'SED-MED01', 'Sede El Poblado', 'Medellín', 'Calle 10 # 43E-12', '(604) 448-1201', 10, 'Operativa'),
+(5, 'SED-MED02', 'Sede Laureles', 'Medellín', 'Circular 73B # 39B-08', '(604) 448-1202', 8, 'Operativa'),
+(6, 'SED-CAL01', 'Sede Granada', 'Cali', 'Av. 9 Norte # 14-28', '(602) 661-3401', 8, 'Operativa'),
+(7, 'SED-CAL02', 'Sede Ciudad Jardín', 'Cali', 'Calle 18 # 105-40', '(602) 661-3402', 6, 'Operativa'),
+(8, 'SED-BAQ01', 'Sede Alto Prado', 'Barranquilla', 'Carrera 54 # 76-110', '(605) 385-6701', 8, 'Operativa'),
+(9, 'SED-BUC01', 'Sede Cabecera del Llano', 'Bucaramanga', 'Carrera 33 # 48-19', '(607) 647-8901', 8, 'Operativa'),
+(10, 'SED-CTG01', 'Sede Bocagrande', 'Cartagena', 'Carrera 3 # 6-77', '(605) 665-2301', 6, 'Operativa');
 
--- 4. Insertar en ESTUDIANTES (10 registros)
-INSERT INTO estudiantes (id, documento, nombres, apellidos, correo, telefono, semestre, programa_id, estado) VALUES
-(1, '1048270562', 'Mateo', 'Salazar Montoya', 'mateo.salazar@estudiante.edu.co', '3001234567', 9, 1, 'Activo'),
-(2, '1042625625', 'Valentina', 'Herrera Torres', 'valentina.herrera@estudiante.edu.co', '3012345678', 8, 2, 'Activo'),
-(3, '1129543582', 'Santiago', 'Valencia Ramirez', 'santiago.valencia@estudiante.edu.co', '3023456789', 9, 3, 'Activo'),
-(4, '1037654321', 'Camila', 'Giraldo Ortiz', 'camila.giraldo@estudiante.edu.co', '3034567890', 8, 4, 'Activo'),
-(5, '1017234567', 'Daniel', 'Marquez Castro', 'daniel.marquez@estudiante.edu.co', '3045678901', 9, 5, 'Activo'),
-(6, '1020456789', 'Mariana', 'Londoño Bedoya', 'mariana.londono@estudiante.edu.co', '3056789012', 10, 6, 'Activo'),
-(7, '1035678901', 'Alejandro', 'Bedoya Guzman', 'alejandro.bedoya@estudiante.edu.co', '3067890123', 8, 7, 'Activo'),
-(8, '1040789012', 'Isabella', 'Quintero Yepes', 'isabella.quintero@estudiante.edu.co', '3078901234', 7, 8, 'Activo'),
-(9, '1025890123', 'Sebastian', 'Perez Arboleda', 'sebastian.perez@estudiante.edu.co', '3089012345', 6, 9, 'Activo'),
-(10, '1019901234', 'Sofia', 'Echeverri Marin', 'sofia.echeverri@estudiante.edu.co', '3090123456', 8, 10, 'Activo');
+-- 5. Historias Clínicas (10 registros)
+INSERT INTO historias_clinicas (id_historia, numero_expediente, id_paciente, fecha_apertura, diagnostico_cie, motivo_consulta, antecedentes_medicos, total_sesiones_prescritas, estado) VALUES
+(1, 'EXP-2026-001', 1, '2026-10-15', 'M54.5 Lumbago agudo con radiculopatía', 'Dolor lumbar incapacitante post levantamiento de carga pesada', 'Sedentarismo laboral, lumbalgia recurrente', 12, 'En Tratamiento'),
+(2, 'EXP-2026-002', 2, '2026-10-18', 'M75.1 Síndrome de manguito rotador hombro izq', 'Limitación severa de abducción y rotación externa con dolor nocturno', 'Tendinitis supraespinoso previa', 10, 'En Tratamiento'),
+(3, 'EXP-2026-003', 3, '2026-10-20', 'S83.5 Rotura de ligamento cruzado anterior der', 'Inestabilidad articular y atrofia muscular post quirúrgica', 'Plastia de LCA hace 4 semanas, meniscectomía parcial', 15, 'En Tratamiento'),
+(4, 'EXP-2026-004', 4, '2026-10-22', 'M22.2 Síndrome de compresión femororrotuliana', 'Dolor anterior de rodillas al bajar pendientes o escaleras', 'Condromalacia rotuliana bilateral grado II', 10, 'En Tratamiento'),
+(5, 'EXP-2026-005', 5, '2026-10-25', 'M50.1 Hernia discal cervical C6-C7', 'Cervicobraquialgia derecha con hormigueo en dedos índice y medio', 'Rectificación lordótica cervical por postura mantenida', 12, 'En Tratamiento'),
+(6, 'EXP-2026-006', 6, '2026-10-28', 'M77.1 Epicondilitis lateral codo derecho', 'Dolor punzante en codo al agarrar objetos o usar teclado', 'Tenista aficionada, digitación continua', 8, 'En Tratamiento'),
+(7, 'EXP-2026-007', 7, '2026-10-30', 'S93.4 Esguince grado II peroneoastragalino izq', 'Edema peri-maleolar e inseguridad en apoyo durante la marcha', 'Esguinces repetitivos en el mismo tobillo', 10, 'En Tratamiento'),
+(8, 'EXP-2026-008', 8, '2026-11-01', 'M41.2 Escoliosis idiopática dorso-lumbar', 'Asimetría en hombros y dolor dorsal persistente al estar de pie', 'Sin antecedentes quirúrgicos', 14, 'En Tratamiento'),
+(9, 'EXP-2026-009', 9, '2026-11-02', 'G51.0 Parálisis de Bell hemicara derecha', 'Pérdida de movilidad mímica, lagoftalmos y debilidad orbicular', 'Episodio post cuadro gripal viral', 15, 'En Tratamiento'),
+(10, 'EXP-2026-010', 10, '2026-11-03', 'M72.2 Fascitis plantar con espolón calcáneo', 'Dolor agudo en talón derecho durante los primeros pasos matinales', 'Sobrepeso leve, pie plano flexible', 8, 'En Tratamiento');
 
--- 5. Insertar en CONVENIOS (10 registros)
-INSERT INTO convenios (id, numero_convenio, empresa_id, programa_id, fecha_inicio, fecha_fin, cupos_disponibles, estado) VALUES
-(1, 'CONV-2026-001', 1, 1, '2026-01-15', '2027-01-15', 5, 'Vigente'),
-(2, 'CONV-2026-002', 2, 2, '2026-02-01', '2027-02-01', 4, 'Vigente'),
-(3, 'CONV-2026-003', 3, 3, '2026-01-20', '2027-01-20', 6, 'Vigente'),
-(4, 'CONV-2026-004', 4, 4, '2026-03-01', '2027-03-01', 3, 'Vigente'),
-(5, 'CONV-2026-005', 5, 5, '2026-02-15', '2027-02-15', 4, 'Vigente'),
-(6, 'CONV-2026-006', 6, 6, '2026-01-10', '2027-01-10', 2, 'Vigente'),
-(7, 'CONV-2026-007', 7, 1, '2026-02-10', '2027-02-10', 8, 'Vigente'),
-(8, 'CONV-2026-008', 8, 8, '2026-03-15', '2027-03-15', 3, 'Vigente'),
-(9, 'CONV-2026-009', 9, 9, '2026-01-25', '2027-01-25', 5, 'Vigente'),
-(10, 'CONV-2026-010', 10, 10, '2026-02-20', '2027-02-20', 4, 'Vigente');
-
--- 6. Insertar en PRACTICAS (10 registros)
-INSERT INTO practicas (id, codigo_practica, estudiante_id, empresa_id, programa_id, convenio_id, tutor_academico_id, cargo_practicante, fecha_inicio, fecha_fin, modalidad, horas_totales, estado) VALUES
-(1, 'PRAC-2026-001', 1, 1, 1, 1, 1, 'Desarrollador Full Stack Junior', '2026-02-01', '2026-07-31', 'Hibrido', 320, 'En curso'),
-(2, 'PRAC-2026-002', 2, 2, 2, 2, 2, 'Analista de Procesos y Operaciones', '2026-02-15', '2026-08-15', 'Presencial', 350, 'En curso'),
-(3, 'PRAC-2026-003', 3, 3, 3, 3, 3, 'Asistente de Planeacion Financiera', '2026-02-01', '2026-07-31', 'Presencial', 320, 'En curso'),
-(4, 'PRAC-2026-004', 4, 4, 4, 4, 4, 'Auxiliar de Auditoria y Costos', '2026-03-01', '2026-08-31', 'Hibrido', 320, 'En curso'),
-(5, 'PRAC-2026-005', 5, 5, 5, 5, 5, 'Practicante de Talento Humano', '2026-02-15', '2026-08-15', 'Remoto', 320, 'En curso'),
-(6, 'PRAC-2026-006', 6, 6, 6, 6, 6, 'Asistente Juridico Contractual', '2026-02-01', '2026-07-31', 'Presencial', 360, 'En curso'),
-(7, 'PRAC-2026-007', 7, 7, 1, 7, 1, 'Desarrollador Cloud Backend', '2026-02-15', '2026-08-15', 'Remoto', 320, 'En curso'),
-(8, 'PRAC-2026-008', 8, 8, 8, 8, 8, 'Disenador UI/UX y Multimedia', '2026-03-15', '2026-09-15', 'Hibrido', 300, 'En curso'),
-(9, 'PRAC-2026-009', 9, 9, 9, 9, 9, 'Programador Web Frontend', '2026-02-01', '2026-07-31', 'Hibrido', 320, 'En curso'),
-(10, 'PRAC-2026-010', 10, 10, 10, 10, 10, 'Analista de Mercadeo Digital', '2026-02-20', '2026-08-20', 'Presencial', 320, 'En curso');
-
--- ============================================================
--- CONSULTAS DE VALIDACION (REQUISITO DE LA FASE 1)
--- ============================================================
--- 1. Conteo de registros por tabla:
--- SELECT 'programas' AS tabla, COUNT(*) AS total FROM programas
--- UNION ALL
--- SELECT 'empresas', COUNT(*) FROM empresas
--- UNION ALL
--- SELECT 'tutores_academicos', COUNT(*) FROM tutores_academicos
--- UNION ALL
--- SELECT 'estudiantes', COUNT(*) FROM estudiantes
--- UNION ALL
--- SELECT 'convenios', COUNT(*) FROM convenios
--- UNION ALL
--- SELECT 'practicas', COUNT(*) FROM practicas;
-
--- 2. Consulta con JOIN: Listado completo de practicas con nombres reales
--- SELECT 
---     p.codigo_practica,
---     CONCAT(e.nombres, ' ', e.apellidos) AS estudiante,
---     em.razon_social AS empresa,
---     pr.nombre AS programa,
---     c.numero_convenio AS convenio,
---     CONCAT(t.nombres, ' ', t.apellidos) AS tutor,
---     p.cargo_practicante,
---     p.modalidad,
---     p.estado
--- FROM practicas p
--- INNER JOIN estudiantes e ON p.estudiante_id = e.id
--- INNER JOIN empresas em ON p.empresa_id = em.id
--- INNER JOIN programas pr ON p.programa_id = pr.id
--- INNER JOIN convenios c ON p.convenio_id = c.id
--- INNER JOIN tutores_academicos t ON p.tutor_academico_id = t.id;
+-- 6. Sesiones de Terapia (10 registros en la tabla central)
+INSERT INTO sesiones_terapia (id_sesion, codigo_sesion, id_paciente, id_fisioterapeuta, id_servicio, id_sede, id_historia, fecha_sesion, hora_inicio, hora_fin, numero_sesion, escala_dolor_eva, observaciones_evolucion, estado_sesion) VALUES
+(1, 'SES-2026-001', 1, 3, 2, 1, 1, '2026-11-01', '08:00:00', '08:45:00', 1, 8, 'Terapia manual lumbar, termoterapia y estiramientos suaves de psoas. Paciente toleró adecuadamente.', 'Realizada'),
+(2, 'SES-2026-002', 2, 4, 3, 2, 2, '2026-11-02', '09:00:00', '09:40:00', 2, 6, 'Aplicación de ultrasonido continuo en supraespinoso y ejercicios de Codman. Dolor disminuyó a 5.', 'Realizada'),
+(3, 'SES-2026-003', 3, 1, 1, 3, 3, '2026-11-03', '10:00:00', '11:00:00', 4, 4, 'Fortalecimiento de cuádriceps en cadena cerrada, propiocepción en bosu y crioterapia final.', 'Realizada'),
+(4, 'SES-2026-004', 4, 6, 8, 4, 4, '2026-11-04', '11:00:00', '11:50:00', 3, 5, 'Reeducación de tracking patelar con kinesiotaping y fortalecimiento de vasto medial oblicuo.', 'Realizada'),
+(5, 'SES-2026-005', 5, 8, 5, 5, 5, '2026-11-05', '14:00:00', '14:35:00', 1, 7, 'Punción seca en puntos gatillo de trapecio superior y angular escápula. Relajación miofascial notable.', 'Realizada'),
+(6, 'SES-2026-006', 6, 3, 2, 6, 6, '2026-11-06', '15:00:00', '15:45:00', 2, 5, 'Masaje transverso profundo Cyriax en tendón extensor común y movilización neurodinámica radial.', 'Realizada'),
+(7, 'SES-2026-007', 7, 1, 1, 7, 7, '2026-11-07', '16:00:00', '17:00:00', 5, 3, 'Ejercicios de equilibrio unipodal en plato de Freeman y fortalecimiento de peroneos laterales.', 'Programada'),
+(8, 'SES-2026-008', 8, 9, 4, 8, 8, '2026-11-08', '08:30:00', '09:20:00', 3, 4, 'Postura RPG en rana al suelo con brazos abiertos. Corrección de rotación interna de hombros.', 'Programada'),
+(9, 'SES-2026-009', 9, 2, 6, 9, 9, '2026-11-09', '10:30:00', '11:30:00', 6, 2, 'Facilitación neuromuscular propioceptiva facial, estímulo frío/calor y ejercicios frente a espejo.', 'Programada'),
+(10, 'SES-2026-010', 10, 8, 5, 10, 10, '2026-11-10', '16:30:00', '17:05:00', 4, 3, 'Liberación miofascial plantar instrumentalizada y punción seca en gastrocnemio medial.', 'Programada');

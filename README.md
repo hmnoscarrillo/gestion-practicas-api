@@ -1,183 +1,85 @@
-# Sistema de Gestion de Practicas Profesionales - API REST
+# Sistema de Gestión Clínica y Terapéutica "FisioSalud" - API REST
 
-API REST construida con **Node.js**, **Express.js** y **MySQL**, desplegada en la plataforma cloud **Railway**, diseñada bajo la arquitectura en capas requerida por el docente (configuracion, modelos, controladores y rutas).
+API REST construida con **Node.js**, **Express.js** y **MySQL Relacional**, desplegada en la plataforma cloud **Railway**, estructurada bajo la arquitectura MVC del docente (`config`, `models`, `controllers`, `routes`).
 
 ---
 
-## 📌 Informacion del Proyecto
-- **Autor:** Ivan Carrillo
+## 📌 Información del Proyecto
+- **Temática Asignada:** Centro de Fisioterapia y Rehabilitación Integral ("FisioSalud")
+- **Autor:** Iván Carrillo
 - **Asignatura:** Taller Evaluativo 3er Corte (40%)
 - **Base de Datos Cloud:** MySQL en Railway (`trolley.proxy.rlwy.net:19091`)
 - **Despliegue de API:** Railway Cloud Platform
-- **URL Publica de la API:** https://api-gestion-practicas-production-4cb7.up.railway.app *(generada en Railway)*
+- **URL Pública de la API:** https://api-gestion-practicas-production.up.railway.app
+- **Portal Web Interactivo:** https://api-gestion-practicas-production.up.railway.app/web/
 
 ---
 
-## 🗄️ Modelo de Base de Datos (MySQL)
+## 🗄️ Modelo de Base de Datos (MySQL - 3FN)
 
-El modelo cuenta con 6 tablas relacionadas, normalizadas en Tercera Forma Normal (3FN), con integridad referencial, claves primarias y restricciones UNIQUE:
+El modelo cuenta con **6 tablas relacionadas**, normalizadas en **Tercera Forma Normal (3FN)**, con integridad referencial (`ON UPDATE CASCADE ON DELETE RESTRICT`), claves primarias y restricciones `UNIQUE`:
 
-1. **`programas`**: Programas academicos de educacion superior (codigo, nombre, facultad, nivel, duracion).
-2. **`empresas`**: Organizaciones vinculadas donde se ejecutan las practicas (nit, razon social, sector, ciudad, contacto).
-3. **`tutores_academicos`**: Docentes asignados para el seguimiento academico (documento, nombres, correo, programa).
-4. **`estudiantes`**: Alumnos habilitados para realizar practica (documento, nombres, correo, semestre, programa).
-5. **`convenios`**: Acuerdos marco entre programas academicos y empresas (numero, vigencia, cupos).
-6. **`practicas`** *(Tabla Principal)*: Gestion centralizada de la practica asignada a un estudiante en una empresa con tutor y convenio.
+1. **`pacientes`**: Pacientes atendidos (cédula, nombres, apellidos, teléfono, email, EPS, fecha de nacimiento, estado).
+2. **`fisioterapeutas`**: Especialistas en salud física y rehabilitación (tarjeta profesional, nombres, especialidad, experiencia, teléfono, correo).
+3. **`servicios_terapia`**: Catálogo de tratamientos (código, nombre, descripción, duración en minutos, costo en COP, modalidad).
+4. **`sedes`**: Sedes clínicas a nivel nacional (código, nombre, ciudad, dirección, teléfono, capacidad de boxes).
+5. **`historias_clinicas`**: Expedientes clínicos vinculados a los pacientes (número de expediente, diagnóstico CIE-10, motivo, antecedentes, sesiones prescritas).
+6. **`sesiones_terapia`** *(Tabla Central)*: Gestión de citas y sesiones clínicas individuales. Relaciona directamente a **Paciente**, **Fisioterapeuta**, **Servicio**, **Sede** e **Historia Clínica**.
 
-Cada tabla contiene **10 registros de prueba reales y consistentes** (insertados mediante `schema.sql`).
+Cada tabla contiene exactamente **10 registros de prueba clínicos reales y consistentes** (60 registros en total).
 
 ---
 
-## 📂 Estructura del Proyecto
-
-Organizada estrictamente segun la estructura provista por el docente:
+## 📂 Estructura Arquitectónica del Proyecto
 
 ```text
 c:\taller 3 corte\
-├── .env.example               # Plantilla de variables de entorno
-├── .gitignore                  # Exclusion de node_modules y credenciales
-├── index.js                    # Punto de entrada de la aplicacion Express
-├── package.json                # Definicion de dependencias y scripts
-├── schema.sql                  # Script DDL/DML completo con datos de ejemplo
-├── src/
-│   ├── config/
-│   │   ├── dbConfig.js         # Conexion y pool MySQL con mysql2 y dotenv
-│   │   └── initDb.js           # Auto-inicializacion de tablas y datos
-│   ├── controllers/
-│   │   ├── programaController.js
-│   │   ├── empresaController.js
-│   │   ├── tutorController.js
-│   │   ├── estudianteController.js
-│   │   ├── convenioController.js
-│   │   └── practicaController.js
-│   ├── models/
-│   │   ├── programaModel.js
-│   │   ├── empresaModel.js
-│   │   ├── tutorModel.js
-│   │   ├── estudianteModel.js
-│   │   ├── convenioModel.js
-│   │   └── practicaModel.js
-│   └── routes/
-│       ├── programaRoutes.js
-│       ├── empresaRoutes.js
-│       ├── tutorRoutes.js
-│       ├── estudianteRoutes.js
-│       ├── convenioRoutes.js
-│       └── practicaRoutes.js
+├── index.js                    # Punto de entrada de la aplicación Express
+├── package.json                # Dependencias (express, mysql2, dotenv, cors)
+├── schema.sql                  # DDL/DML con 6 tablas y 10 registros por tabla
+├── Coleccion_Postman_Fisioterapia.json # Colección de pruebas automatizadas
+├── public/
+│   └── index.html              # Portal Web interactivo en tiempo real
+└── src/
+    ├── config/
+    │   ├── dbConfig.js         # Pool de conexiones MySQL con fallback a Railway
+    │   └── initDb.js           # Auto-inicialización de base de datos
+    ├── models/
+    │   ├── pacienteModel.js
+    │   ├── fisioterapeutaModel.js
+    │   ├── servicioModel.js
+    │   ├── sedeModel.js
+    │   ├── historiaModel.js
+    │   └── sesionModel.js
+    ├── controllers/
+    │   ├── pacienteController.js
+    │   ├── fisioterapeutaController.js
+    │   ├── servicioController.js
+    │   ├── sedeController.js
+    │   ├── historiaController.js
+    │   └── sesionController.js
+    └── routes/
+        ├── pacienteRoutes.js
+        ├── fisioterapeutaRoutes.js
+        ├── servicioRoutes.js
+        ├── sedeRoutes.js
+        ├── historiaRoutes.js
+        └── sesionRoutes.js
 ```
 
 ---
 
-## ⚙️ Variables de Entorno Requeridas
+## 🚀 Endpoints Principales del CRUD
 
-Crea un archivo `.env` en la raiz del proyecto basado en `.env.example`:
-
-```env
-PORT=3000
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=tu_contraseña
-DB_NAME=gestion_practicas
-```
-
-> **Nota para Railway:** En produccion, Railway inyecta automaticamente las variables `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD` y `MYSQLDATABASE`. El archivo `dbConfig.js` esta configurado con fallback automatico para detectar ambas fuentes sin requerir cambios manuales.
-
----
-
-## 🚀 Instalacion y Ejecucion Local
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/hmnoscarrillo/gestion-practicas-api.git
-   cd gestion-practicas-api
-   ```
-
-2. **Instalar dependencias:**
-   ```bash
-   npm install
-   ```
-
-3. **Configurar el entorno:**
-   Copia `.env.example` a `.env` y ajusta los valores segun tu servidor MySQL local o la instancia remota de Railway.
-
-4. **Inicializar la base de datos (opcional si la API auto-inicializa):**
-   ```bash
-   npm run init-db
-   ```
-
-5. **Iniciar el servidor:**
-   ```bash
-   npm start
-   # o para modo desarrollo con recarga automatica:
-   npm run dev
-   ```
-
-El servidor quedara escuchando en `http://localhost:3000`.
-
----
-
-## 📡 Listado Completo de Endpoints de la API
-
-La API responde tanto a la convencion del docente (`/get...`, `/post...`, `/put...`, `/delete...`) como a la convencion REST estandar (`/`, `/:id`).
-
-### 1. Practicas Profesionales (Tabla Principal)
-| Metodo | Endpoint | Descripcion |
-|---|---|---|
-| `GET` | `/api/practicas/getPracticas` | Obtener todas las practicas (con JOINs completos) |
-| `GET` | `/api/practicas/getPracticaById/:id` | Consultar practica por ID individual |
-| `POST` | `/api/practicas/postPractica` | Registrar nueva practica profesional |
-| `PUT` | `/api/practicas/putPractica/:id` | Actualizar datos de una practica existente |
-| `DELETE` | `/api/practicas/deletePractica/:id` | Eliminar registro de una practica |
-
-### 2. Programas Academicos
-| Metodo | Endpoint | Descripcion |
-|---|---|---|
-| `GET` | `/api/programas/getProgramas` | Listado de programas academicos |
-| `GET` | `/api/programas/getProgramaById/:id` | Consultar programa por ID |
-| `POST` | `/api/programas/postPrograma` | Registrar nuevo programa |
-| `PUT` | `/api/programas/putPrograma/:id` | Actualizar programa existente |
-| `DELETE` | `/api/programas/deletePrograma/:id` | Eliminar programa academico |
-
-### 3. Empresas
-| Metodo | Endpoint | Descripcion |
-|---|---|---|
-| `GET` | `/api/empresas/getEmpresas` | Listado de empresas vinculadas |
-| `GET` | `/api/empresas/getEmpresaById/:id` | Consultar empresa por ID |
-| `POST` | `/api/empresas/postEmpresa` | Registrar nueva empresa |
-| `PUT` | `/api/empresas/putEmpresa/:id` | Actualizar datos de empresa |
-| `DELETE` | `/api/empresas/deleteEmpresa/:id` | Eliminar empresa |
-
-### 4. Tutores Academicos
-| Metodo | Endpoint | Descripcion |
-|---|---|---|
-| `GET` | `/api/tutores/getTutores` | Listado de docentes tutores |
-| `GET` | `/api/tutores/getTutorById/:id` | Consultar tutor por ID |
-| `POST` | `/api/tutores/postTutor` | Registrar nuevo tutor |
-| `PUT` | `/api/tutores/putTutor/:id` | Actualizar tutor existente |
-| `DELETE` | `/api/tutores/deleteTutor/:id` | Eliminar tutor academico |
-
-### 5. Estudiantes
-| Metodo | Endpoint | Descripcion |
-|---|---|---|
-| `GET` | `/api/estudiantes/getEstudiantes` | Listado de estudiantes |
-| `GET` | `/api/estudiantes/getEstudianteById/:id` | Consultar estudiante por ID |
-| `POST` | `/api/estudiantes/postEstudiante` | Registrar nuevo estudiante |
-| `PUT` | `/api/estudiantes/putEstudiante/:id` | Actualizar estudiante |
-| `DELETE` | `/api/estudiantes/deleteEstudiante/:id` | Eliminar estudiante |
-
-### 6. Convenios
-| Metodo | Endpoint | Descripcion |
-|---|---|---|
-| `GET` | `/api/convenios/getConvenios` | Listado de convenios vigentes |
-| `GET` | `/api/convenios/getConvenioById/:id` | Consultar convenio por ID |
-| `POST` | `/api/convenios/postConvenio` | Registrar nuevo convenio |
-| `PUT` | `/api/convenios/putConvenio/:id` | Actualizar convenio |
-| `DELETE` | `/api/convenios/deleteConvenio/:id` | Eliminar convenio |
-
----
-
-## 🧪 Pruebas con Postman
-Se adjunta en la raiz del proyecto la coleccion `Coleccion_Postman_Practicas.json` para importar en Postman o Insomnia con la suite de pruebas completa:
-- CRUD completo sobre `practicas` (Create -> Read List -> Read Id -> Update -> Delete -> Verify 404).
-- Pruebas de casos de error (ID inexistente 404, omision de campos 400, conflicto de clave unica 409).
+| Módulo | Método | Endpoint | Descripción |
+|---|:---:|---|---|
+| **Sesiones (Central)** | GET | `/api/sesiones/getSesiones` | Listado completo con JOINs de todas las entidades |
+| **Sesiones (Central)** | GET | `/api/sesiones/getSesionById/:id` | Detalle de una sesión específica por ID |
+| **Sesiones (Central)** | POST | `/api/sesiones/createSesion` | Crear nueva sesión clínica |
+| **Sesiones (Central)** | PUT | `/api/sesiones/updateSesion/:id` | Actualizar sesión (evolución, dolor EVA, estado) |
+| **Sesiones (Central)** | DELETE | `/api/sesiones/deleteSesion/:id` | Eliminar registro de sesión |
+| **Pacientes** | GET / POST / PUT / DELETE | `/api/pacientes/*` | CRUD completo de Pacientes |
+| **Fisioterapeutas** | GET / POST / PUT / DELETE | `/api/fisioterapeutas/*` | CRUD completo de Especialistas |
+| **Servicios** | GET / POST / PUT / DELETE | `/api/servicios/*` | CRUD completo de Tratamientos |
+| **Sedes** | GET / POST / PUT / DELETE | `/api/sedes/*` | CRUD completo de Sedes |
+| **Historias** | GET / POST / PUT / DELETE | `/api/historias/*` | CRUD completo de Expedientes |
